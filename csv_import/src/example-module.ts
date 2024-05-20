@@ -33,15 +33,53 @@ export function hello() {
 }
 
 export function getFiles() {
+  // スプレッドシート取得
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const activeSheet = ss.getSheetByName('シート1');
+
+  if (!activeSheet) {
+    console.log('シートがありません');
+    return;
+  }
+
   // TODO: フォルダのIDを環境変数でセットするかスプシから読み取る
   const folderId = '';
   // ファイル一覧取得
   const folder = DriveApp.getFolderById(folderId);
   const files = folder.getFiles();
 
+  const fileNames = [];
   while (files.hasNext()) {
     const file = files.next();
     const fileName = file.getName();
     console.log(fileName);
+    fileNames.push([fileName]);
   }
+
+  // 変数設定
+  // ファイル書き込み位置設定
+  const fileWriteStartRow = 5;
+  const fileWriteStartCol = 2;
+
+  // 既存ファイル反映セルクリア範囲設定
+  const fileWriteEndRow = 1000;
+
+  // 書き込む前にセルをクリア
+  activeSheet
+    .getRange(
+      fileWriteStartRow,
+      fileWriteStartCol,
+      fileWriteEndRow,
+      fileNames[0].length
+    )
+    .clear();
+  // スプレッドシート反映
+  activeSheet
+    .getRange(
+      fileWriteStartRow,
+      fileWriteStartCol,
+      fileNames.length,
+      fileNames[0].length
+    )
+    .setValues(fileNames);
 }
