@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Copyright 2023 Google LLC
  *
@@ -16,3 +17,139 @@
 import { hello } from './example-module';
 
 console.log(hello());
+
+/**
+ * Gmail の受信ボックスから楽天決済案内メールを取得します。
+ * @returns メール情報
+ */
+const getMail = (): GoogleAppsScript.Gmail.GmailMessage | undefined => {
+  // 直近10件取得
+  const threads = GmailApp.search(
+    'subject:(カード利用のお知らせ(本人ご利用分)) -{速報版} after:2022/11/11 before:2024/11/12',
+    0,
+    10
+  );
+
+  if (!threads || threads.length === 0) {
+    return;
+  }
+  // 最新１件返す
+  const message = threads[0].getMessages();
+  return message[0];
+};
+
+
+/**
+ * メール本文から決済履歴の情報を抽出し、決済情報オブジェクトを取得します。
+ * @param message メール本文
+ * @returns 決済情報オブジェクト
+ */
+const parseMessage = (message: string) => {
+  const paymentInfoList: PaymentInfo[] = [];
+  const matched: RegExpMatchArray | null = message.match(
+    /■利用日(?:(?!■利用日|■ご利用明細のご確認).)+/gs
+  );
+  if (matched) {
+    for (const paymentMessage of matched) {
+      const m = new Message(paymentMessage);
+      console.log(m.getUseDay(), m.getUseStore(), m.getUser(), m.getAmount());
+      paymentInfoList.push(
+        new PaymentInfo(
+          m.getUseDay(),
+          m.getUseStore(),
+          m.getUser(),
+          m.getAmount(),
+          m.getPayMonth()
+        )
+      );
+    }
+  }
+
+  //return paymentInfoList;
+};
+
+class Message {
+  message: string;
+
+  constructor(message: string) {
+    this.message = message;
+  }
+
+  private extractPaymentInfo = (prefix: string): string => {
+    const matched: RegExpMatchArray | null = this.message.match(`${prefix}.+`);
+    return matched ? matched[0].replace(prefix, '') : '';
+  };
+
+  getUseDay(): string {
+    return this.extractPaymentInfo('■利用日: ');
+  }
+
+  getUseStore(): string {
+    return this.extractPaymentInfo('■利用先: ');
+  }
+
+  getUser(): string {
+    return this.extractPaymentInfo('■利用者: ');
+  }
+
+  getAmount(): string {
+    return this.extractPaymentInfo('■利用金額: ');
+  }
+
+  getPayMonth(): string {
+    return this.extractPaymentInfo('■支払月: ');
+  }
+}
+
+class PaymentInfo {
+  private useDay: string;
+  private useStore: string;
+  private user: string;
+  private amount: string;
+  private payMonth: string;
+
+  constructor(
+    useDay: string,
+    useStore: string,
+    user: string,
+    amount: string,
+    payMonth: string
+  ) {
+    this.useDay = useDay;
+    this.useStore = useStore;
+    this.user = user;
+    this.amount = amount;
+    this.payMonth = payMonth;
+  }
+
+  // Getter メソッドなど、必要に応じて追加
+  getUseDay(): string {
+    return this.useDay;
+  }
+
+  getUseStore(): string {
+    return this.useStore;
+  }
+
+  getUser(): string {
+    return this.user;
+  }
+
+  getAmount(): string {
+    return this.amount;
+  }
+
+  getPayMonth(): string {
+    return this.payMonth;
+  }
+}
+
+const main = () => {
+  const message = getMail();
+  if (message === undefined) return;
+  const body = message.getPlainBody();
+  console.log(body);
+  parseMessage(body);
+};
+
+main();
