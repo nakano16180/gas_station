@@ -18,6 +18,9 @@ import { hello } from './example-module';
 
 console.log(hello());
 
+// cf. https://wizapp-solution.com/archives/2823
+
+// TODO: 汎用化したい
 /**
  * Gmail の受信ボックスから楽天決済案内メールを取得します。
  * @returns メール情報
@@ -38,7 +41,6 @@ const getMail = (): GoogleAppsScript.Gmail.GmailMessage | undefined => {
   return message[0];
 };
 
-
 /**
  * メール本文から決済履歴の情報を抽出し、決済情報オブジェクトを取得します。
  * @param message メール本文
@@ -51,8 +53,15 @@ const parseMessage = (message: string) => {
   );
   if (matched) {
     for (const paymentMessage of matched) {
+      console.log(parseMessage);
       const m = new Message(paymentMessage);
-      console.log(m.getUseDay(), m.getUseStore(), m.getUser(), m.getAmount());
+      console.log(
+        m.getUseDay(),
+        m.getUseStore(),
+        m.getUser(),
+        m.getAmount(),
+        m.getPayMonth()
+      );
       paymentInfoList.push(
         new PaymentInfo(
           m.getUseDay(),
@@ -150,6 +159,7 @@ const main = () => {
   const body = message.getPlainBody();
   console.log(body);
   parseMessage(body);
+  // TODO: スプレッドシートに書き込む
 };
 
 main();
