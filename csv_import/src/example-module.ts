@@ -33,7 +33,7 @@ export function hello() {
 }
 
 export function getFiles() {
-  // スプレッドシート取得
+  // スプレッドシート取得（多くの場合、GASスクリプトはスプシに紐づいている）
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const activeSheet = ss.getSheetByName('シート1');
 
@@ -42,8 +42,16 @@ export function getFiles() {
     return;
   }
 
+  // A1セルを選択
+  const range = activeSheet.getRange('A1');
+  // セルの値を取得
+  const value = range.getValue();
+
+  // 取得したデータを実行ログに表示
+  console.log(value);
+
   // TODO: フォルダのIDを環境変数でセットするかスプシから読み取る
-  const folderId = '';
+  const folderId = value;
   // ファイル一覧取得
   const folder = DriveApp.getFolderById(folderId);
   const files = folder.getFiles();
