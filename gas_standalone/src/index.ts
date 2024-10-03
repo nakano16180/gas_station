@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 import { hello } from './example-module';
+import { Message, PaymentInfo } from './rakuten';
 
 console.log(hello());
 
@@ -74,92 +75,43 @@ const parseMessage = (message: string) => {
     }
   }
 
-  //return paymentInfoList;
+  return paymentInfoList;
 };
-
-class Message {
-  message: string;
-
-  constructor(message: string) {
-    this.message = message;
-  }
-
-  private extractPaymentInfo = (prefix: string): string => {
-    const matched: RegExpMatchArray | null = this.message.match(`${prefix}.+`);
-    return matched ? matched[0].replace(prefix, '') : '';
-  };
-
-  getUseDay(): string {
-    return this.extractPaymentInfo('■利用日: ');
-  }
-
-  getUseStore(): string {
-    return this.extractPaymentInfo('■利用先: ');
-  }
-
-  getUser(): string {
-    return this.extractPaymentInfo('■利用者: ');
-  }
-
-  getAmount(): string {
-    return this.extractPaymentInfo('■利用金額: ');
-  }
-
-  getPayMonth(): string {
-    return this.extractPaymentInfo('■支払月: ');
-  }
-}
-
-class PaymentInfo {
-  private useDay: string;
-  private useStore: string;
-  private user: string;
-  private amount: string;
-  private payMonth: string;
-
-  constructor(
-    useDay: string,
-    useStore: string,
-    user: string,
-    amount: string,
-    payMonth: string
-  ) {
-    this.useDay = useDay;
-    this.useStore = useStore;
-    this.user = user;
-    this.amount = amount;
-    this.payMonth = payMonth;
-  }
-
-  // Getter メソッドなど、必要に応じて追加
-  getUseDay(): string {
-    return this.useDay;
-  }
-
-  getUseStore(): string {
-    return this.useStore;
-  }
-
-  getUser(): string {
-    return this.user;
-  }
-
-  getAmount(): string {
-    return this.amount;
-  }
-
-  getPayMonth(): string {
-    return this.payMonth;
-  }
-}
 
 const main = () => {
   const message = getMail();
   if (message === undefined) return;
   const body = message.getPlainBody();
   console.log(body);
-  parseMessage(body);
+  const parsed = parseMessage(body);
   // TODO: スプレッドシートに書き込む
+
+  // TODO: 関数に切り出す
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName('シート1');
+
+  if (!sheet) {
+    console.log('シートがありません');
+    return;
+  }
+
+  // ヘッダー書き込み
+  const range = sheet.getRange('A1:E1');
+  range.setValues([['利用日', '利用先', '利用者', '利用金額', '支払い月']]);
+
+  for (const data of parsed) {
+    const lastRow = sheet.getLastRow();
+
+    const toList = [
+      data.getUseDay(),
+      data.getUseStore(),
+      data.getUser(),
+      data.getAmount(),
+      data.getPayMonth(),
+    ];
+
+    sheet.getRange(lastRow + 1, 1, 1, toList.length).setValues([toList]);
+  }
 };
 
 main();
