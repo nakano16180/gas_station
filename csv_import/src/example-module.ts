@@ -91,3 +91,25 @@ export function getFiles() {
     )
     .setValues(fileNames);
 }
+
+// TODO: スプレッドシートに列を追加する
+export function addColumn() {
+  // TODO: sheetは引数でとりたい
+  // スプレッドシート取得（多くの場合、GASスクリプトはスプシに紐づいている）
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const activeSheet = ss.getSheetByName('シート1');
+
+  if (!activeSheet) {
+    console.log('シートがありません');
+    return;
+  }
+
+  // データがある最終列を取得
+  const lastCol = activeSheet.getLastColumn();
+
+  activeSheet.getRange(1, lastCol + 1, 1, 1).setValue('add column');
+}
+// TODO: スプレッドシートの任意の位置に列を追加する
+
+// TODO: スプレッドシートの新しいシートを追加する
+// TODO: スプレッドシートのシートの名前を変更する

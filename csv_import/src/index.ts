@@ -28,6 +28,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { getFiles } from './example-module';
+import { getFiles, addColumn } from './example-module';
 
 getFiles();
+addColumn();
