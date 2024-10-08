@@ -21,15 +21,40 @@ console.log(hello());
 
 // cf. https://wizapp-solution.com/archives/2823
 
+/**
+ * 現在の日付を取得する関数
+ * @returns {Date} 現在の日付
+ */
+function getToday() {
+  return new Date();
+}
+
+/**
+ * 指定された日付の前日を取得する関数
+ * @param {Date} date 対象の日付
+ * @returns {Date} 前日の日付
+ */
+function getYesterday(date: Date) {
+  const yesterday = new Date(date);
+  yesterday.setDate(date.getDate() - 1);
+  return yesterday;
+}
+
 // TODO: 汎用化したい
 /**
  * Gmail の受信ボックスから楽天決済案内メールを取得します。
  * @returns メール情報
  */
 const getMail = (): GoogleAppsScript.Gmail.GmailMessage | undefined => {
+  const today = getToday();
+  const yesterdayString = Utilities.formatDate(
+    getYesterday(today),
+    Session.getScriptTimeZone(),
+    'yyyy/MM/dd'
+  );
   // 直近10件取得
   const threads = GmailApp.search(
-    'subject:(カード利用のお知らせ(本人ご利用分)) -{速報版} after:2022/11/11 before:2024/11/12',
+    `subject:(カード利用のお知らせ(本人ご利用分)) -{速報版} after:${yesterdayString}`,
     0,
     10
   );
