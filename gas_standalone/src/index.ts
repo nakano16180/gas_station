@@ -79,7 +79,7 @@ const parseMessage = (message: string) => {
   );
   if (matched) {
     for (const paymentMessage of matched) {
-      console.log(parseMessage);
+      console.log(paymentMessage);
       const m = new Message(paymentMessage);
       console.log(
         m.getUseDay(),
@@ -101,6 +101,62 @@ const parseMessage = (message: string) => {
   }
 
   return paymentInfoList;
+};
+
+const getOldMails = (): string[] | undefined => {
+  const threads = GmailApp.search(
+    'subject:(カード利用のお知らせ(本人ご利用分)) -{速報版} after:2024/01/01 before:2024/10/01',
+    0,
+    200
+  );
+
+  if (!threads || threads.length === 0) {
+    return;
+  }
+
+  const messages = threads.map(m => m.getMessages()[0]);
+  const bodies = messages.map(m => m.getPlainBody());
+  return bodies;
+};
+
+const logOldMessages = () => {
+  // TODO: 関数に切り出す
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName('シート2');
+
+  if (!sheet) {
+    console.log('シートがありません');
+    return;
+  }
+
+  // ヘッダー書き込み
+  const range = sheet.getRange('A1:E1');
+  range.setValues([['利用日', '利用先', '利用者', '利用金額', '支払い月']]);
+
+  const messageBodies = getOldMails();
+  if (messageBodies === undefined) return;
+
+  for (let i = 1; i <= messageBodies.length; i++) {
+    const body = messageBodies[messageBodies.length - i]; // 古い方から書き込みたいので逆転する
+    console.log('----- メッセージボディ -----');
+    console.log(body);
+    const parsed = parseMessage(body);
+
+    parsed.reverse();
+    for (const data of parsed) {
+      const lastRow = sheet.getLastRow();
+
+      const toList = [
+        data.getUseDay(),
+        data.getUseStore(),
+        data.getUser(),
+        data.getAmount(),
+        data.getPayMonth(),
+      ];
+
+      sheet.getRange(lastRow + 1, 1, 1, toList.length).setValues([toList]);
+    }
+  }
 };
 
 const main = () => {
